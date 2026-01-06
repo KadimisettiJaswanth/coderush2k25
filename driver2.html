@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="night">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EasyRide - Driver Dashboard</title>
+    <meta name="description" content="Dashboard for EasyRide drivers to track earnings, hours, and ride history." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* * THEME & COLOR VARIABLES */
+        :root { --radius: 0.5rem; }
+        /* Light text colors */
+        :root[data-theme='morning'],
+        :root[data-theme='afternoon'] {
+            --foreground: 222.2 84% 4.9%;
+            --card-foreground: 222.2 84% 4.9%;
+            --secondary-foreground: 222.2 47.4% 11.2%;
+            --muted-foreground: 215 20.2% 65.1%;
+        }
+
+        /* Dark text colors */
+        :root[data-theme='evening'],
+        :root[data-theme='night'] {
+            --foreground: 210 40% 98%;
+            --card-foreground: 210 40% 98%;
+            --secondary-foreground: 210 40% 98%;
+            --muted-foreground: 215 20.2% 65.1%;
+        }
+        
+        /* Morning theme colors */
+        [data-theme='morning'] {
+            --background: 210 40% 98%; --card: 210 40% 96.1%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 210 40% 96.1%; --muted: 210 40% 96.1%; --border: 214.3 31.8% 91.4%; --input: 214.3 31.8% 91.4%; --ring: 222.2 84% 4.9%;
+        }
+        /* Afternoon theme colors */
+        [data-theme='afternoon'] {
+            --background: 20 14.3% 95.9%; --card: 16 12.3% 93.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 240 4.8% 95.9%; --muted: 240 4.8% 95.9%; --border: 240 5.9% 90%; --input: 240 5.9% 90%; --ring: 240 5.9% 10%;
+        }
+        /* Evening theme colors */
+        [data-theme='evening'] {
+            --background: 240 10% 3.9%; --card: 240 10% 8.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 240 3.7% 15.9%; --muted: 240 3.7% 15.9%; --border: 240 3.7% 15.9%; --input: 240 3.7% 15.9%; --ring: 346.8 77.2% 49.8%;
+        }
+        /* Night theme colors */
+        [data-theme='night'] {
+            --background: 222.2 84% 4.9%; --card: 222.2 84% 6.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 217.2 32.6% 17.5%; --muted: 217.2 32.6% 17.5%; --border: 217.2 32.6% 17.5%; --input: 217.2 32.6% 17.5%; --ring: 346.8 77.2% 49.8%;
+        }
+
+        /* * GENERAL STYLING */
+        *, *::before, *::after { box-sizing: border-box; }
+        body, html {
+            height: 100%; margin: 0; font-family: 'Inter', sans-serif;
+            background-color: hsl(var(--background)); color: hsl(var(--foreground));
+            transition: background-color 0.3s, color 0.3s;
+            min-height: 100vh; padding: 2rem 1rem;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 1rem;
+            margin: auto;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .header .user-info {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        .header .user-info img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 1rem;
+            border: 2px solid hsl(var(--primary));
+            object-fit: cover;
+        }
+        .header .user-info h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        .header .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stats-card {
+            background-color: hsl(var(--card));
+            padding: 1rem;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stats-card h3 {
+            font-size: 0.875rem;
+            margin: 0 0 0.5rem;
+            color: hsl(var(--muted-foreground));
+        }
+        .stats-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: hsl(var(--primary));
+        }
+        
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 2rem 0 1rem;
+        }
+
+        .targets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+            background-color: hsl(var(--card));
+            border-radius: var(--radius);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .target-item {
+            text-align: center;
+        }
+        .target-item h4 {
+            font-size: 0.9rem;
+            margin: 0 0 0.25rem;
+            color: hsl(var(--muted-foreground));
+        }
+        .target-item .value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: hsl(var(--foreground));
+        }
+        .target-item .value.primary {
+            color: hsl(var(--primary));
+        }
+
+        .graph-card {
+            background-color: hsl(var(--card));
+            padding: 1rem;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        #earnings-chart {
+            width: 100%;
+            height: 200px;
+        }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: hsl(var(--card));
+            padding: 1rem;
+            border-radius: var(--radius);
+            margin-bottom: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .history-item .details {
+            flex: 1;
+        }
+        .history-item .details h4 {
+            font-size: 1rem;
+            margin: 0 0 0.25rem;
+        }
+        .history-item .details p {
+            font-size: 0.8rem;
+            margin: 0;
+            color: hsl(var(--muted-foreground));
+        }
+        .history-item .amount {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: hsl(var(--primary));
+        }
+
+        .theme-toggle-btn { position: fixed; top: 1rem; right: 1rem; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background-color: hsl(var(--card)); color: hsl(var(--foreground)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); cursor: pointer; transition: background-color 0.2s, transform 0.2s; }
+        .theme-toggle-btn:hover { background-color: hsl(var(--secondary)); }
+        .theme-toggle-btn:active { transform: scale(0.95); }
+
+        /* New: Language Selector Styles */
+        .language-selector-container {
+            position: fixed;
+            top: 4rem; /* Position below the theme toggle button */
+            right: 1rem;
+        }
+        #language-selector {
+            background-color: hsl(var(--card));
+            color: hsl(var(--foreground));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            padding: 0.3rem 0.5rem;
+            cursor: pointer;
+        }
+        #language-selector:focus {
+            outline: none;
+            border-color: hsl(var(--primary));
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-in-out;
+            z-index: 1000;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background-color: hsl(var(--card));
+            padding: 2rem;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 500px;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease-in-out;
+            position: relative;
+        }
+        .modal-overlay.open .modal-content {
+            transform: translateY(0);
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: hsl(var(--muted-foreground));
+            font-size: 1.5rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 0 1.5rem;
+            text-align: center;
+        }
+        .modal-body label {
+            display: block;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            color: hsl(var(--muted-foreground));
+        }
+        .modal-body input, .modal-body select {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            background-color: hsl(var(--input));
+            color: hsl(var(--foreground));
+            transition: border-color 0.2s;
+        }
+        .modal-body input:read-only {
+            background-color: hsl(var(--background));
+            cursor: default;
+        }
+        .modal-body input:focus, .modal-body select:focus {
+            outline: none;
+            border-color: hsl(var(--primary));
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--foreground));
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .btn-primary {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+        
+        /* Advertisement Styles */
+        .advertisement {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            background-color: hsl(var(--card));
+            border: 1px dashed hsl(var(--muted-foreground));
+            text-align: center;
+            color: hsl(var(--foreground));
+        }
+        .advertisement h4 {
+            margin: 0 0 0.5rem;
+            font-size: 1rem;
+            color: hsl(var(--primary));
+            font-weight: 600;
+        }
+        .advertisement p {
+            margin: 0;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+        
+        /* Toggle Switch Styles */
+        .duty-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            font-weight: 500;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .toggle-switch-container {
+            display: inline-block;
+            position: relative;
+            width: 44px;
+            height: 24px;
+        }
+
+        .toggle-switch-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-switch-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: hsl(var(--secondary));
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-switch-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: hsl(var(--foreground));
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch-input:checked + .toggle-switch-slider {
+            background-color: hsl(var(--primary));
+        }
+
+        .toggle-switch-input:focus + .toggle-switch-slider {
+            box-shadow: 0 0 1px hsl(var(--primary));
+        }
+
+        .toggle-switch-input:checked + .toggle-switch-slider:before {
+            transform: translateX(20px);
+            background-color: hsl(var(--primary-foreground));
+        }
+        
+        /* Notification Modal specific styles */
+        .notification-content {
+            max-width: 400px;
+            text-align: center;
+        }
+        .notification-content h3 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: hsl(var(--primary));
+            margin-bottom: 1rem;
+        }
+        .notification-content p {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .notification-content .ride-details {
+            text-align: left;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: hsl(var(--background));
+            border-radius: var(--radius);
+        }
+        .notification-content .ride-details span {
+            font-weight: 600;
+        }
+
+        /* Reusable message box */
+        .message-box-content {
+            max-width: 350px;
+            text-align: center;
+        }
+
+        /* Floating Chat Button */
+        .chat-fab {
+            position: fixed;
+            bottom: 5.5rem; /* Above the footer navigation */
+            right: 1.5rem;
+            width: 56px;
+            height: 56px;
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 101; /* Above footer, below modals */
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            text-decoration: none;
+        }
+        .chat-fab:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+        }
+        .chat-fab svg {
+            width: 28px;
+            height: 28px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="user-info" id="profile-info-btn">
+               <img class="max-h-96 w-full" src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22128%22%20height%3D%22128%22%20viewBox%3D%220%200%2064%2064%22%20aria-hidden%3D%22true%22%20role%3D%22img%22%3E%0A%20%20%3C!--%20Head%20outline%20--%3E%0A%20%20%3Ccircle%20cx%3D%2232%22%20cy%3D%2220%22%20r%3D%2210%22%20fill%3D%22none%22%20stroke%3D%22%23DC143C%22%20stroke-width%3D%223%22%3E%3C%2Fcircle%3E%0A%20%20%3C!--%20Shoulders%20%2F%20torso%20outline%20--%3E%0A%20%20%3Cpath%20d%3D%22M16%2052c0-8.837%207.163-16%2016-16s16%207.163%2016%2016v2H16v-2z%22%20fill%3D%22none%22%20stroke%3D%22%23DC143C%22%20stroke-width%3D%223%22%3E%3C%2Fpath%3E%0A%3C%2Fsvg%3E%0A">
+                <h2 data-translate-key="helloDriver">Hello, Driver!</h2>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-primary" id="redeem-btn" data-translate-key="redeem">Redeem</button>
+            </div>
+        </div>
+
+        <div class="duty-toggle">
+            <span id="duty-status" data-translate-key="offDuty">Off-Duty</span>
+            <label class="toggle-switch-container">
+                <input type="checkbox" class="toggle-switch-input" id="duty-toggle">
+                <span class="toggle-switch-slider"></span>
+            </label>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stats-card">
+                <h3 data-translate-key="totalEarnings">Total Earnings</h3>
+                <p class="value" id="total-earnings">₹0.00</p>
+            </div>
+            <div class="stats-card">
+                <h3 data-translate-key="receivedAmount">Received Amount</h3>
+                <p class="value" id="received-amount">₹0.00</p>
+            </div>
+            <div class="stats-card">
+                <h3 data-translate-key="hoursOnRides">Hours on Rides</h3>
+                <p class="value" id="hours-on-rides">0</p>
+            </div>
+            <div class="stats-card">
+                <h3 data-translate-key="bookings">Bookings</h3>
+                <p class="value" id="bookings-completed">0</p>
+            </div>
+        </div>
+
+        <h3 class="section-title" data-translate-key="dailyTargets">Daily Targets & Bonuses</h3>
+        <div class="targets-grid">
+            <div class="target-item">
+                <h4 data-translate-key="nightExtraFee">Extra Fee (Night)</h4>
+                <p class="value primary" id="night-extra-fee">₹15.00</p>
+            </div>
+            <div class="target-item">
+                <h4 data-translate-key="dailyBookingsTarget">Daily Bookings Target</h4>
+                <p class="value" id="daily-bookings-target">0</p>
+            </div>
+            <div class="target-item">
+                <h4 data-translate-key="extraBookings">Extra Bookings</h4>
+                <p class="value" id="extra-bookings">0</p>
+            </div>
+        </div>
+
+        <h3 class="section-title" data-translate-key="dailyEarnings">Daily Earnings</h3>
+        <div class="graph-card">
+            <canvas id="earnings-chart"></canvas>
+        </div>
+
+        <h3 class="section-title" data-translate-key="rideHistory">Ride History</h3>
+        <ul class="history-list" id="ride-history-list">
+            </ul>
+    </div>
+    
+    <button id="theme-toggle" class="theme-toggle-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+    </button>
+
+    <div class="language-selector-container">
+        <select id="language-selector">
+            <option value="en">English</option>
+            <option value="te">తెలుగు</option>
+            <option value="hi">हिन्दी</option>
+            <option value="ta">தமிழ்</option>
+        </select>
+    </div>
+
+    <div class="modal-overlay" id="details-modal">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="modal-close-btn">&times;</button>
+            <h3 class="modal-title" data-translate-key="driverDetails">Driver Details</h3>
+            <div class="modal-body">
+                <label for="driver-name" data-translate-key="name">Name</label>
+                <input type="text" id="driver-name" readonly>
+
+                <label for="driver-address" data-translate-key="address">Address</label>
+                <input type="text" id="driver-address" readonly>
+                
+                <label for="driver-license" data-translate-key="drivingLicense">Driving License No.</label>
+                <input type="text" id="driver-license" readonly>
+                
+                <label for="driver-phone" data-translate-key="phoneNumber">Phone Number</label>
+                <input type="tel" id="driver-phone" readonly>
+
+                <label for="driver-email" data-translate-key="email">Email</label>
+                <input type="email" id="driver-email" readonly>
+
+                <label for="license-validity" data-translate-key="licenseValidity">License Validity</label>
+                <input type="text" id="license-validity" readonly>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="back-btn" data-translate-key="back">Back</button>
+                <button class="btn btn-primary" id="edit-details-btn" data-translate-key="edit">Edit</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="redeem-modal">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="redeem-modal-close-btn">&times;</button>
+            <h3 class="modal-title" data-translate-key="redeemEarnings">Redeem Earnings</h3>
+            <div class="modal-body">
+                <p><span data-translate-key="redeemableBalance">Current Redeemable Balance:</span> <span id="redeemable-balance">₹0.00</span></p>
+                <label for="redeem-amount" data-translate-key="amountToRedeem">Amount to Redeem</label>
+                <input type="number" id="redeem-amount" data-translate-key="enterAmount" placeholder="Enter amount">
+
+                <label for="select-account" data-translate-key="selectAccount">Select Account</label>
+                <select id="select-account">
+                    </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="redeem-cancel-btn" data-translate-key="cancel">Cancel</button>
+                <button class="btn btn-primary" id="redeem-now-btn" data-translate-key="redeemNow">Redeem Now</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="notification-modal">
+        <div class="modal-content notification-content">
+            <h3 class="modal-title" data-translate-key="newRideRequest">New Ride Request!</h3>
+            <div class="ride-details">
+                <p><span data-translate-key="customer">Customer:</span> <span id="notification-customer-name"></span></p>
+                <p><span data-translate-key="phone">Phone:</span> <span id="notification-phone-number"></span></p>
+                <p><span data-translate-key="price">Price:</span> <span id="notification-price"></span></p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="reject-ride-btn" data-translate-key="reject">Reject</button>
+                <a href="driverride.html"><button class="btn btn-primary" id="accept-ride-btn" data-translate-key="accept">Accept</button></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="message-box-modal">
+        <div class="modal-content message-box-content">
+            <button class="modal-close-btn" id="message-box-close-btn">&times;</button>
+            <p id="message-box-text"></p>
+            <div class="modal-actions">
+                <button class="btn btn-primary" id="message-box-ok-btn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="advertisement">
+        <h4 data-translate-key="advertisement">Advertisement</h4>
+        <p data-translate-key="adText">Drive more, earn more! Sign up for our premium navigation service and get a 10% bonus on all rides for your first month. </p>
+    </div>
+
+    <a href="chat.html" class="chat-fab" aria-label="Open AI Assistant">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+    </a>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // All UI elements
+            const uiElements = {
+                themeToggle: document.getElementById('theme-toggle'),
+                totalEarnings: document.getElementById('total-earnings'),
+                receivedAmount: document.getElementById('received-amount'),
+                hoursOnRides: document.getElementById('hours-on-rides'),
+                bookingsCompleted: document.getElementById('bookings-completed'),
+                nightExtraFee: document.getElementById('night-extra-fee'),
+                dailyBookingsTarget: document.getElementById('daily-bookings-target'),
+                extraBookings: document.getElementById('extra-bookings'),
+                earningsChart: document.getElementById('earnings-chart'),
+                rideHistoryList: document.getElementById('ride-history-list'),
+                profileInfoBtn: document.getElementById('profile-info-btn'),
+                detailsModal: document.getElementById('details-modal'),
+                modalCloseBtn: document.getElementById('modal-close-btn'),
+                backBtn: document.getElementById('back-btn'),
+                editDetailsBtn: document.getElementById('edit-details-btn'),
+                driverNameInput: document.getElementById('driver-name'),
+                driverAddressInput: document.getElementById('driver-address'),
+                driverLicenseInput: document.getElementById('driver-license'),
+                driverPhoneInput: document.getElementById('driver-phone'),
+                driverEmailInput: document.getElementById('driver-email'),
+                licenseValidityInput: document.getElementById('license-validity'),
+                redeemBtn: document.getElementById('redeem-btn'),
+                redeemModal: document.getElementById('redeem-modal'),
+                redeemModalCloseBtn: document.getElementById('redeem-modal-close-btn'),
+                redeemCancelBtn: document.getElementById('redeem-cancel-btn'),
+                redeemNowBtn: document.getElementById('redeem-now-btn'),
+                redeemableBalance: document.getElementById('redeemable-balance'),
+                redeemAmountInput: document.getElementById('redeem-amount'),
+                selectAccount: document.getElementById('select-account'),
+                dutyToggle: document.getElementById('duty-toggle'),
+                dutyStatus: document.getElementById('duty-status'),
+                notificationModal: document.getElementById('notification-modal'),
+                acceptRideBtn: document.getElementById('accept-ride-btn'),
+                rejectRideBtn: document.getElementById('reject-ride-btn'),
+                notificationCustomerName: document.getElementById('notification-customer-name'),
+                notificationPhoneNumber: document.getElementById('notification-phone-number'),
+                notificationPrice: document.getElementById('notification-price'),
+                messageBoxModal: document.getElementById('message-box-modal'),
+                messageBoxText: document.getElementById('message-box-text'),
+                messageBoxOkBtn: document.getElementById('message-box-ok-btn'),
+                languageSelector: document.getElementById('language-selector') // New element
+            };
+
+            let notificationTimer = null;
+
+            // Sample data
+            const dashboardData = {
+                nightExtraFee: 15.00, dailyBookingsTarget: 10, totalEarnings: 325.50, receivedAmount: 292.95, hours: 18.5, bookings: 42,
+                dailyEarnings: [25, 45, 30, 60, 55, 70, 40],
+                rideHistory: [
+                    { time: '10:30 AM', customer: 'Alex Johnson', amount: 15.25 }, { time: '09:45 AM', customer: 'Maria Rodriguez', amount: 12.00 },
+                    { time: '08:15 AM', customer: 'Chris Evans', amount: 25.75 }, { time: 'Yesterday', customer: 'Jessica Miller', amount: 18.50 },
+                    { time: 'Yesterday', customer: 'Michael Chen', amount: 22.00 },
+                ],
+                driverDetails: {
+                    name: 'Suresh Kumar', address: '123 Main Street, Bangalore', licenseNumber: 'KA01-2021-1234567',
+                    phoneNumber: '+91 98765 43210', email: 'suresh.k@email.com', licenseValidity: '01/01/2021 to 01/01/2031'
+                },
+                bankAccounts: [ { name: 'ICICI Bank', number: 'xxxx-xxxx-1234' }, { name: 'HDFC Bank', number: 'xxxx-xxxx-5678' } ]
+            };
+            const newRides = [
+                { name: 'Priya Sharma', phone: '+91 98765 12345', price: 120.50 }, { name: 'Ravi Singh', phone: '+91 91234 56789', price: 85.00 },
+                { name: 'Anjali Patel', phone: '+91 80123 45678', price: 210.75 },
+            ];
+            
+            // --- NEW: TRANSLATION LOGIC ---
+            const translations = {
+                en: {
+                    helloDriver: 'Hello, Driver!', redeem: 'Redeem', offDuty: 'Off-Duty', onDuty: 'On-Duty',
+                    totalEarnings: 'Total Earnings', receivedAmount: 'Received Amount', hoursOnRides: 'Hours on Rides', bookings: 'Bookings',
+                    dailyTargets: 'Daily Targets & Bonuses', nightExtraFee: 'Extra Fee (Night)', dailyBookingsTarget: 'Daily Bookings Target', extraBookings: 'Extra Bookings',
+                    dailyEarnings: 'Daily Earnings', rideHistory: 'Ride History', driverDetails: 'Driver Details', name: 'Name', address: 'Address',
+                    drivingLicense: 'Driving License No.', phoneNumber: 'Phone Number', email: 'Email', licenseValidity: 'License Validity',
+                    back: 'Back', edit: 'Edit', save: 'Save', redeemEarnings: 'Redeem Earnings', redeemableBalance: 'Current Redeemable Balance:',
+                    amountToRedeem: 'Amount to Redeem', enterAmount: 'Enter amount', selectAccount: 'Select Account', cancel: 'Cancel', redeemNow: 'Redeem Now',
+                    newRideRequest: 'New Ride Request!', customer: 'Customer:', phone: 'Phone:', price: 'Price:', reject: 'Reject', accept: 'Accept',
+                    advertisement: 'Advertisement', adText: 'Drive more, earn more! Sign up for our premium navigation service and get a 10% bonus on all rides for your first month.',
+                    rideTo: 'Ride to', location: 's location', yesterday: 'Yesterday', notification: 'Notification',
+                    validAmountError: 'Please enter a valid amount.', selectAccountError: 'Please select an account.',
+                    transferProcessing: 'Transfer of ₹{amount} to account ending in {account} is being processed.',
+                    rideAccepted: 'Ride Accepted! You can now proceed to the pickup location.', success: 'Success'
+                },
+                te: {
+                    helloDriver: 'హలో, డ్రైవర్!', redeem: 'రీడీమ్ చేయండి', offDuty: 'ఆఫ్-డ్యూటీ', onDuty: 'ఆన్-డ్యూటీ',
+                    totalEarnings: 'మొత్తం సంపాదన', receivedAmount: 'అందుకున్న మొత్తం', hoursOnRides: 'రైడ్‌లపై గంటలు', bookings: 'బుకింగ్‌లు',
+                    dailyTargets: 'రోజువారీ లక్ష్యాలు & బోనస్‌లు', nightExtraFee: 'అదనపు రుసుము (రాత్రి)', dailyBookingsTarget: 'రోజువారీ బుకింగ్‌ల లక్ష్యం', extraBookings: 'అదనపు బుకింగ్‌లు',
+                    dailyEarnings: 'రోజువారీ సంపాదన', rideHistory: 'రైడ్ చరిత్ర', driverDetails: 'డ్రైవర్ వివరాలు', name: 'పేరు', address: 'చిరునామా',
+                    drivingLicense: 'డ్రైవింగ్ లైసెన్స్ నెం.', phoneNumber: 'ఫోన్ నంబర్', email: 'ఇమెయిల్', licenseValidity: 'లైసెన్స్ చెల్లుబాటు',
+                    back: 'వెనుకకు', edit: 'సవరించు', save: 'సేవ్ చేయి', redeemEarnings: 'సంపాదనను రీడీమ్ చేయండి', redeemableBalance: 'ప్రస్తుత రీడీమ్ చేయగల బ్యాలెన్స్:',
+                    amountToRedeem: 'రీడీమ్ చేయవలసిన మొత్తం', enterAmount: 'మొత్తాన్ని నమోదు చేయండి', selectAccount: 'ఖాతాను ఎంచుకోండి', cancel: 'రద్దు చేయి', redeemNow: 'ఇప్పుడే రీడీమ్ చేయండి',
+                    newRideRequest: 'కొత్త రైడ్ అభ్యర్థన!', customer: 'కస్టమర్:', phone: 'ఫోన్:', price: 'ధర:', reject: 'తిరస్కరించు', accept: 'అంగీకరించు',
+                    advertisement: 'ప్రకటన', adText: 'ఎక్కువ డ్రైవ్ చేయండి, ఎక్కువ సంపాదించండి! మా ప్రీమియం నావిగేషన్ సేవ కోసం సైన్ అప్ చేయండి మరియు మీ మొదటి నెలలో అన్ని రైడ్‌లపై 10% బోనస్ పొందండి.',
+                    rideTo: 'కి రైడ్ చేయండి', location: ' యొక్క స్థానం', yesterday: 'నిన్న', notification: 'నోటిఫికేషన్',
+                    validAmountError: 'దయచేసి చెల్లుబాటు అయ్యే మొత్తాన్ని నమోదు చేయండి.', selectAccountError: 'దయచేసి ఒక ఖాతాను ఎంచుకోండి.',
+                    transferProcessing: '{account} తో ముగిసే ఖాతాకు ₹{amount} బదిలీ ప్రాసెస్ చేయబడుతోంది.',
+                    rideAccepted: 'రైడ్ అంగీకరించబడింది! మీరు ఇప్పుడు పికప్ స్థానానికి వెళ్లవచ్చు.', success: 'విజయం'
+                },
+                hi: {
+                    helloDriver: 'नमस्ते, ड्राइवर!', redeem: 'रिडीम करें', offDuty: 'ऑफ-ड्यूटी', onDuty: 'ऑन-ड्यूटी',
+                    totalEarnings: 'कुल कमाई', receivedAmount: 'प्राप्त राशि', hoursOnRides: 'राइड पर घंटे', bookings: 'बुकिंग',
+                    dailyTargets: 'दैनिक लक्ष्य और बोनस', nightExtraFee: 'अतिरिक्त शुल्क (रात)', dailyBookingsTarget: 'दैनिक बुकिंग लक्ष्य', extraBookings: 'अतिरिक्त बुकिंग',
+                    dailyEarnings: 'दैनिक कमाई', rideHistory: 'राइड इतिहास', driverDetails: 'ड्राइवर विवरण', name: 'नाम', address: 'पता',
+                    drivingLicense: 'ड्राइविंग लाइसेंस नंबर', phoneNumber: 'फोन नंबर', email: 'ईमेल', licenseValidity: 'लाइसेंस वैधता',
+                    back: 'वापस', edit: 'संपादित करें', save: 'सहेजें', redeemEarnings: 'कमाई रिडीम करें', redeemableBalance: 'वर्तमान रिडीम करने योग्य शेष:',
+                    amountToRedeem: 'रिडीम करने के लिए राशि', enterAmount: 'राशि दर्ज करें', selectAccount: 'खाता चुनें', cancel: 'रद्द करें', redeemNow: 'अभी रिडीम करें',
+                    newRideRequest: 'नई राइड का अनुरोध!', customer: 'ग्राहक:', phone: 'फ़ोन:', price: 'कीमत:', reject: 'अस्वीकार करें', accept: 'स्वीकार करें',
+                    advertisement: 'विज्ञापन', adText: 'अधिक ड्राइव करें, अधिक कमाएँ! हमारी प्रीमियम नेविगेशन सेवा के लिए साइन अप करें और अपने पहले महीने के लिए सभी राइड्स पर 10% बोनस प्राप्त करें।',
+                    rideTo: 'की ओर सवारी करें', location: ' का स्थान', yesterday: 'कल', notification: 'सूचना',
+                    validAmountError: 'कृपया एक वैध राशि दर्ज करें।', selectAccountError: 'कृपया एक खाता चुनें।',
+                    transferProcessing: '{account} में समाप्त होने वाले खाते में ₹{amount} का हस्तांतरण संसाधित किया जा रहा है।',
+                    rideAccepted: 'राइड स्वीकार कर ली गई! अब आप पिकअप स्थान पर आगे बढ़ सकते हैं।', success: 'सफलता'
+                },
+                ta: {
+                    helloDriver: 'வணக்கம், ஓட்டுநர்!', redeem: 'மீட்டெடு', offDuty: 'பணியில் இல்லை', onDuty: 'பணியில்',
+                    totalEarnings: 'மொத்த வருவாய்', receivedAmount: 'பெறப்பட்ட தொகை', hoursOnRides: 'சவாரிகளில் மணிநேரம்', bookings: 'பதிவுகள்',
+                    dailyTargets: 'தினசரி இலக்குகள் & போனஸ்கள்', nightExtraFee: 'கூடுதல் கட்டணம் (இரவு)', dailyBookingsTarget: 'தினசரி முன்பதிவு இலக்கு', extraBookings: 'கூடுதல் முன்பதிவுகள்',
+                    dailyEarnings: 'தினசரி வருவாய்', rideHistory: 'சவாரி வரலாறு', driverDetails: 'ஓட்டுநர் விவரங்கள்', name: 'பெயர்', address: 'முகவரி',
+                    drivingLicense: 'ஓட்டுநர் உரிமம் எண்.', phoneNumber: 'தொலைபேசி எண்', email: 'மின்னஞ்சல்', licenseValidity: 'உரிம செல்லுபடியாகும்',
+                    back: 'பின்செல்', edit: 'திருத்து', save: 'சேமி', redeemEarnings: 'வருவாயை மீட்டெடு', redeemableBalance: 'தற்போதைய மீட்கக்கூடிய இருப்பு:',
+                    amountToRedeem: 'மீட்டெடுக்க வேண்டிய தொகை', enterAmount: 'தொகையை உள்ளிடவும்', selectAccount: 'கணக்கைத் தேர்ந்தெடுக்கவும்', cancel: 'ரத்துசெய்', redeemNow: 'இப்போது மீட்டெடு',
+                    newRideRequest: 'புதிய சவாரி கோரிக்கை!', customer: 'வாடிக்கையாளர்:', phone: 'தொலைபேசி:', price: 'விலை:', reject: 'நிராகரி', accept: 'ஏற்றுக்கொள்',
+                    advertisement: 'விளம்பரம்', adText: 'அதிகமாக ஓட்டுங்கள், அதிகமாக சம்பாதிக்கவும்! எங்கள் பிரீமியம் வழிசெலுத்தல் சேவைக்கு பதிவுசெய்து, உங்கள் முதல் மாதத்திற்கான அனைத்து சவாரிகளிலும் 10% போனஸ் பெறுங்கள்.',
+                    rideTo: 'இடம் சவாரி', location: 'இன் இடம்', yesterday: 'நேற்று', notification: 'அறிவிப்பு',
+                    validAmountError: 'தயவுசெய்து சரியான தொகையை உள்ளிடவும்.', selectAccountError: 'தயவுசெய்து ஒரு கணக்கைத் தேர்ந்தெடுக்கவும்.',
+                    transferProcessing: '{account} இல் முடிவடையும் கணக்கிற்கு ₹{amount} பரிமாற்றம் செயல்படுத்தப்படுகிறது.',
+                    rideAccepted: 'சவாரி ஏற்றுக்கொள்ளப்பட்டது! நீங்கள் இப்போது பிக்அப் இடத்திற்குச் செல்லலாம்.', success: 'வெற்றி'
+                }
+            };
+
+            const changeLanguage = (lang) => {
+                document.querySelectorAll('[data-translate-key]').forEach(el => {
+                    const key = el.dataset.translateKey;
+                    if (translations[lang][key]) {
+                        el.textContent = translations[lang][key];
+                    }
+                });
+                // Update placeholder text
+                const redeemAmountInput = document.getElementById('redeem-amount');
+                if (redeemAmountInput) {
+                    redeemAmountInput.placeholder = translations[lang].enterAmount || 'Enter amount';
+                }
+                
+                // Update dynamically changing text like duty status
+                const isChecked = uiElements.dutyToggle.checked;
+                uiElements.dutyStatus.textContent = isChecked ? translations[lang].onDuty : translations[lang].offDuty;
+
+                populateRideHistory(); // Repopulate history with new language
+                localStorage.setItem('selectedLanguage', lang);
+                uiElements.languageSelector.value = lang;
+            };
+
+            const getCurrentLang = () => localStorage.getItem('selectedLanguage') || 'en';
+            // --- END TRANSLATION LOGIC ---
+
+            // Reusable function to show a custom message box
+            const showMessageBox = (message, titleKey = 'notification', callback = null) => {
+                const lang = getCurrentLang();
+                const messageBoxTitle = uiElements.messageBoxModal.querySelector('.modal-title');
+                const messageBoxCloseBtn = uiElements.messageBoxModal.querySelector('#message-box-close-btn');
+                
+                uiElements.messageBoxText.textContent = message;
+                messageBoxTitle.textContent = translations[lang][titleKey];
+                uiElements.messageBoxModal.classList.add('open');
+                
+                const closeHandler = () => {
+                    uiElements.messageBoxModal.classList.remove('open');
+                    if (callback) callback();
+                    uiElements.messageBoxOkBtn.removeEventListener('click', closeHandler);
+                    messageBoxCloseBtn.removeEventListener('click', closeHandler);
+                };
+                
+                uiElements.messageBoxOkBtn.addEventListener('click', closeHandler);
+                messageBoxCloseBtn.addEventListener('click', closeHandler);
+            };
+
+            const updateDashboardStats = () => {
+                const extraBookings = Math.max(0, dashboardData.bookings - dashboardData.dailyBookingsTarget);
+                uiElements.totalEarnings.textContent = `₹${dashboardData.totalEarnings.toFixed(2)}`;
+                uiElements.receivedAmount.textContent = `₹${dashboardData.receivedAmount.toFixed(2)}`;
+                uiElements.hoursOnRides.textContent = `${dashboardData.hours.toFixed(1)} hrs`;
+                uiElements.bookingsCompleted.textContent = dashboardData.bookings;
+                uiElements.nightExtraFee.textContent = `₹${dashboardData.nightExtraFee.toFixed(2)}`;
+                uiElements.dailyBookingsTarget.textContent = dashboardData.dailyBookingsTarget;
+                uiElements.extraBookings.textContent = extraBookings;
+            };
+            
+            const drawChart = () => {
+                const canvas = uiElements.earningsChart; if (!canvas.getContext) return; const ctx = canvas.getContext('2d');
+                const data = dashboardData.dailyEarnings; const maxVal = Math.max(...data); const padding = 20; const width = canvas.width;
+                const height = canvas.height; const chartWidth = width - 2 * padding; const chartHeight = height - 2 * padding;
+                ctx.clearRect(0, 0, width, height); const lineColor = getComputedStyle(document.documentElement).getPropertyValue('--primary');
+                const textColor = getComputedStyle(document.documentElement).getPropertyValue('--foreground');
+                ctx.beginPath(); ctx.moveTo(padding, height - padding - (data[0] / maxVal) * chartHeight);
+                for (let i = 1; i < data.length; i++) {
+                    const x = padding + (i / (data.length - 1)) * chartWidth; const y = height - padding - (data[i] / maxVal) * chartHeight;
+                    ctx.lineTo(x, y);
+                }
+                ctx.strokeStyle = `hsl(${lineColor})`; ctx.lineWidth = 2; ctx.stroke(); ctx.fillStyle = `hsl(${lineColor})`;
+                ctx.font = '12px Inter'; ctx.textAlign = 'center';
+                data.forEach((value, i) => {
+                    const x = padding + (i / (data.length - 1)) * chartWidth; const y = height - padding - (value / maxVal) * chartHeight;
+                    ctx.beginPath(); ctx.arc(x, y, 3, 0, 2 * Math.PI); ctx.fill(); ctx.fillStyle = `hsl(${textColor})`;
+                    ctx.fillText(`₹${value}`, x, y - 10);
+                });
+            };
+
+            const populateRideHistory = () => {
+                const lang = getCurrentLang();
+                const historyList = uiElements.rideHistoryList;
+                historyList.innerHTML = '';
+                dashboardData.rideHistory.forEach(ride => {
+                    const li = document.createElement('li');
+                    li.className = 'history-item';
+                    const rideToText = `${translations[lang].rideTo} ${ride.customer.split(' ')[0]}'s ${translations[lang].location}`;
+                    const timeText = ride.time.includes('Yesterday') ? translations[lang].yesterday : ride.time;
+                    li.innerHTML = `
+                        <div class="details">
+                            <h4>${rideToText}</h4>
+                            <p>${timeText}</p>
+                        </div>
+                        <div class="amount">₹${ride.amount.toFixed(2)}</div>
+                    `;
+                    historyList.appendChild(li);
+                });
+            };
+            
+            // Theme toggle
+            const themes = ['morning', 'afternoon', 'evening', 'night'];
+            const applyTheme = (theme) => { document.documentElement.setAttribute('data-theme', theme); localStorage.setItem('theme', theme); drawChart(); };
+            const savedTheme = localStorage.getItem('theme');
+            applyTheme(savedTheme || 'night');
+            uiElements.themeToggle.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const nextIndex = (themes.indexOf(currentTheme) + 1) % themes.length;
+                applyTheme(themes[nextIndex]);
+            });
+
+            // Profile Modal
+            const openDetailsModal = () => { populateModalFields(); uiElements.detailsModal.classList.add('open'); };
+            const closeDetailsModal = () => { uiElements.detailsModal.classList.remove('open'); setModalFieldsReadonly(true); uiElements.editDetailsBtn.setAttribute('data-translate-key', 'edit'); changeLanguage(getCurrentLang()); };
+            const populateModalFields = () => { const d = dashboardData.driverDetails; uiElements.driverNameInput.value = d.name; uiElements.driverAddressInput.value = d.address; uiElements.driverLicenseInput.value = d.licenseNumber; uiElements.driverPhoneInput.value = d.phoneNumber; uiElements.driverEmailInput.value = d.email; uiElements.licenseValidityInput.value = d.licenseValidity; };
+            const setModalFieldsReadonly = (isReadonly) => { uiElements.driverNameInput.readOnly = isReadonly; uiElements.driverAddressInput.readOnly = isReadonly; uiElements.driverLicenseInput.readOnly = isReadonly; uiElements.driverPhoneInput.readOnly = isReadonly; uiElements.driverEmailInput.readOnly = isReadonly; uiElements.licenseValidityInput.readOnly = isReadonly; };
+            const handleEditClick = () => {
+                const lang = getCurrentLang();
+                if (uiElements.editDetailsBtn.textContent === translations[lang].edit) {
+                    uiElements.editDetailsBtn.textContent = translations[lang].save;
+                    setModalFieldsReadonly(false);
+                } else {
+                    uiElements.editDetailsBtn.textContent = translations[lang].edit;
+                    setModalFieldsReadonly(true);
+                }
+            };
+            uiElements.profileInfoBtn.addEventListener('click', openDetailsModal);
+            uiElements.modalCloseBtn.addEventListener('click', closeDetailsModal);
+            uiElements.backBtn.addEventListener('click', closeDetailsModal);
+            uiElements.editDetailsBtn.addEventListener('click', handleEditClick);
+
+            // Redemption Modal
+            const openRedeemModal = () => { uiElements.redeemableBalance.textContent = `₹${dashboardData.receivedAmount.toFixed(2)}`; populateAccountOptions(); uiElements.redeemModal.classList.add('open'); };
+            const closeRedeemModal = () => { uiElements.redeemModal.classList.remove('open'); };
+            const populateAccountOptions = () => { uiElements.selectAccount.innerHTML = ''; dashboardData.bankAccounts.forEach(acc => { const opt = document.createElement('option'); opt.value = acc.number; opt.textContent = `${acc.name} (${acc.number})`; uiElements.selectAccount.appendChild(opt); }); };
+            const handleRedeemNow = () => {
+                const lang = getCurrentLang();
+                const amount = parseFloat(uiElements.redeemAmountInput.value);
+                const selectedAccount = uiElements.selectAccount.value;
+                if (isNaN(amount) || amount <= 0 || amount > dashboardData.receivedAmount) { showMessageBox(translations[lang].validAmountError); return; }
+                if (!selectedAccount) { showMessageBox(translations[lang].selectAccountError); return; }
+                let message = translations[lang].transferProcessing;
+                message = message.replace('{amount}', amount.toFixed(2)).replace('{account}', selectedAccount.slice(-4));
+                showMessageBox(message);
+                closeRedeemModal();
+            };
+            uiElements.redeemBtn.addEventListener('click', openRedeemModal);
+            uiElements.redeemModalCloseBtn.addEventListener('click', closeRedeemModal);
+            uiElements.redeemCancelBtn.addEventListener('click', closeRedeemModal);
+            uiElements.redeemNowBtn.addEventListener('click', handleRedeemNow);
+
+            // Duty Toggle
+            uiElements.dutyToggle.addEventListener('change', (event) => {
+                const lang = getCurrentLang();
+                if (event.target.checked) {
+                    uiElements.dutyStatus.textContent = translations[lang].onDuty;
+                    notificationTimer = setTimeout(() => {
+                        const rideData = newRides[Math.floor(Math.random() * newRides.length)];
+                        uiElements.notificationCustomerName.textContent = rideData.name;
+                        uiElements.notificationPhoneNumber.textContent = rideData.phone;
+                        uiElements.notificationPrice.textContent = `₹${rideData.price.toFixed(2)}`;
+                        uiElements.notificationModal.classList.add('open');
+                    }, 3000);
+                } else {
+                    uiElements.dutyStatus.textContent = translations[lang].offDuty;
+                    if (notificationTimer) clearTimeout(notificationTimer);
+                    uiElements.notificationModal.classList.remove('open');
+                }
+            });
+
+            // Ride Notification Actions
+            uiElements.acceptRideBtn.addEventListener('click', () => { uiElements.notificationModal.classList.remove('open'); showMessageBox(translations[getCurrentLang()].rideAccepted, 'success'); });
+            uiElements.rejectRideBtn.addEventListener('click', () => { uiElements.notificationModal.classList.remove('open'); });
+
+            // New: Language Selector Event
+            uiElements.languageSelector.addEventListener('change', (event) => {
+                changeLanguage(event.target.value);
+            });
+
+            // Initial calls
+            updateDashboardStats();
+            drawChart();
+            
+            // Apply saved language on load
+            const savedLang = localStorage.getItem('selectedLanguage') || 'en';
+            changeLanguage(savedLang);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EasyRide - Active Ride</title>
+    <meta name="description" content="View active ride details, including a map and customer information." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* * THEME & COLOR VARIABLES */
+        :root { --radius: 0.5rem; }
+        
+        /* Light text colors for morning/afternoon themes */
+        :root[data-theme='morning'],
+        :root[data-theme='afternoon'] {
+            --foreground: 222.2 84% 4.9%;
+            --card-foreground: 222.2 84% 4.9%;
+            --secondary-foreground: 222.2 47.4% 11.2%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --background: 0 0% 100%;
+            --card: 0 0% 100%;
+            --border: 214.3 31.8% 91.4%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+        }
+
+        /* Dark text colors for evening/night themes */
+        :root[data-theme='evening'],
+        :root[data-theme='night'] {
+            --foreground: 210 40% 98%;
+            --card-foreground: 210 40% 98%;
+            --secondary-foreground: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 14% 50%;
+            --background: 222.2 84% 4.9%;
+            --card: 217.2 32.6% 17.5%;
+            --border: 217.2 32.6% 17.5%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+        }
+
+        * {
+            box-sizing: border-box;
+            padding: 0;
+            margin: 0;
+        }
+
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .back-btn {
+            background: none;
+            border: none;
+            color: hsl(var(--foreground));
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            cursor: pointer;
+            text-decoration: none; /* In case it's an <a> tag */
+        }
+        
+        .back-btn svg {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+        
+        .map-container {
+            width: 100%;
+            height: 400px;
+            border-radius: var(--radius);
+            overflow: hidden; /* Ensures the iframe respects the rounded corners */
+        }
+
+        .map-container iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .details-card {
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .details-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid hsl(var(--border));
+            padding-bottom: 0.75rem;
+        }
+        
+        .details-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .details-label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .details-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: hsl(var(--foreground));
+        }
+        
+        /* Specific styling for the distance and cost */
+        .details-value.distance {
+            color: #22c55e;
+        }
+        
+        .details-value.cost {
+            color: #f59e0b;
+        }
+
+        /* * Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+                align-items: flex-start;
+            }
+            .map-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Page Header -->
+        <div class="header">
+            <!-- Back Button -->
+            <button class="back-btn" onclick="history.back()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+                    <path fill-rule="evenodd" d="M11.03 2.296a.75.75 0 0 1 0 1.06l-5.71 5.71h14.28a.75.75 0 0 1 0 1.5H5.32L11.03 16.644a.75.75 0 0 1-1.06 1.06l-6.25-6.25a.75.75 0 0 1 0-1.06l6.25-6.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
+                </svg>
+            </button>
+            <h1>Active Ride</h1>
+        </div>
+
+        <!-- Google Maps Iframe -->
+        <div class="map-container">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3877.5662519379594!2d79.2897673!3d13.623282599999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bb2b511cbefcaf3%3A0x4eb0b29e1d33b522!2sMohan%20Babu%20University!5e0!3m2!1sen!2sin!4v1757620198316!5m2!1sen!2sin" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+
+        <!-- Customer Details Card -->
+        <div class="details-card">
+            <div class="details-item">
+                <span class="details-label">Customer Name</span>
+                <span class="details-value" id="customer-name"></span>
+            </div>
+            <div class="details-item">
+                <span class="details-label">Phone Number</span>
+                <span class="details-value" id="phone-number"></span>
+            </div>
+            <div class="details-item">
+                <span class="details-label">Ride Cost</span>
+                <span class="details-value cost" id="ride-cost"></span>
+            </div>
+            <div class="details-item">
+                <span class="details-label">Distance to Customer</span>
+                <span class="details-value distance" id="distance-to-customer"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Apply theme from local storage
+            const storedTheme = localStorage.getItem('theme');
+            if (storedTheme) {
+                document.documentElement.setAttribute('data-theme', storedTheme);
+            } else {
+                // Default to 'night' theme if no theme is found in local storage
+                document.documentElement.setAttribute('data-theme', 'night');
+            }
+
+            // Function to generate mock ride details
+            function generateMockDetails() {
+                const names = ["Jordan S.", "Alex M.", "Casey L.", "Morgan P."];
+                const phones = ["(555) 123-4567", "(555) 234-5678", "(555) 345-6789", "(555) 456-7890"];
+                const costs = [25.50, 32.75, 18.00, 45.25];
+                const distances = [0.8, 1.5, 0.4, 2.1];
+
+                return {
+                    name: names[Math.floor(Math.random() * names.length)],
+                    phone: phones[Math.floor(Math.random() * phones.length)],
+                    cost: costs[Math.floor(Math.random() * costs.length)],
+                    distance: distances[Math.floor(Math.random() * distances.length)],
+                };
+            }
+
+            // Get the HTML elements to update
+            const customerNameEl = document.getElementById('customer-name');
+            const phoneNumberEl = document.getElementById('phone-number');
+            const rideCostEl = document.getElementById('ride-cost');
+            const distanceEl = document.getElementById('distance-to-customer');
+
+            // Generate and display mock data on page load
+            const rideDetails = generateMockDetails();
+            customerNameEl.textContent = rideDetails.name;
+            phoneNumberEl.textContent = rideDetails.phone;
+            rideCostEl.textContent = `₹${rideDetails.cost.toFixed(2)}`;
+            distanceEl.textContent = `${rideDetails.distance.toFixed(1)} km`;
+        });
+    </script>
+</body>
+</html>
